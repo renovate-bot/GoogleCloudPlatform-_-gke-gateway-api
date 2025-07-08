@@ -19,123 +19,34 @@
 package fake
 
 import (
-	"context"
-
 	v1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	labels "k8s.io/apimachinery/pkg/labels"
-	types "k8s.io/apimachinery/pkg/types"
-	watch "k8s.io/apimachinery/pkg/watch"
-	testing "k8s.io/client-go/testing"
+	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/clientset/versioned/typed/networking/v1"
+	gentype "k8s.io/client-go/gentype"
 )
 
-// FakeGCPSessionAffinityPolicies implements GCPSessionAffinityPolicyInterface
-type FakeGCPSessionAffinityPolicies struct {
+// fakeGCPSessionAffinityPolicies implements GCPSessionAffinityPolicyInterface
+type fakeGCPSessionAffinityPolicies struct {
+	*gentype.FakeClientWithList[*v1.GCPSessionAffinityPolicy, *v1.GCPSessionAffinityPolicyList]
 	Fake *FakeNetworkingV1
-	ns   string
 }
 
-var gcpsessionaffinitypoliciesResource = v1.SchemeGroupVersion.WithResource("gcpsessionaffinitypolicies")
-
-var gcpsessionaffinitypoliciesKind = v1.SchemeGroupVersion.WithKind("GCPSessionAffinityPolicy")
-
-// Get takes name of the gCPSessionAffinityPolicy, and returns the corresponding gCPSessionAffinityPolicy object, and an error if there is any.
-func (c *FakeGCPSessionAffinityPolicies) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.GCPSessionAffinityPolicy, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(gcpsessionaffinitypoliciesResource, c.ns, name), &v1.GCPSessionAffinityPolicy{})
-
-	if obj == nil {
-		return nil, err
+func newFakeGCPSessionAffinityPolicies(fake *FakeNetworkingV1, namespace string) networkingv1.GCPSessionAffinityPolicyInterface {
+	return &fakeGCPSessionAffinityPolicies{
+		gentype.NewFakeClientWithList[*v1.GCPSessionAffinityPolicy, *v1.GCPSessionAffinityPolicyList](
+			fake.Fake,
+			namespace,
+			v1.SchemeGroupVersion.WithResource("gcpsessionaffinitypolicies"),
+			v1.SchemeGroupVersion.WithKind("GCPSessionAffinityPolicy"),
+			func() *v1.GCPSessionAffinityPolicy { return &v1.GCPSessionAffinityPolicy{} },
+			func() *v1.GCPSessionAffinityPolicyList { return &v1.GCPSessionAffinityPolicyList{} },
+			func(dst, src *v1.GCPSessionAffinityPolicyList) { dst.ListMeta = src.ListMeta },
+			func(list *v1.GCPSessionAffinityPolicyList) []*v1.GCPSessionAffinityPolicy {
+				return gentype.ToPointerSlice(list.Items)
+			},
+			func(list *v1.GCPSessionAffinityPolicyList, items []*v1.GCPSessionAffinityPolicy) {
+				list.Items = gentype.FromPointerSlice(items)
+			},
+		),
+		fake,
 	}
-	return obj.(*v1.GCPSessionAffinityPolicy), err
-}
-
-// List takes label and field selectors, and returns the list of GCPSessionAffinityPolicies that match those selectors.
-func (c *FakeGCPSessionAffinityPolicies) List(ctx context.Context, opts metav1.ListOptions) (result *v1.GCPSessionAffinityPolicyList, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewListAction(gcpsessionaffinitypoliciesResource, gcpsessionaffinitypoliciesKind, c.ns, opts), &v1.GCPSessionAffinityPolicyList{})
-
-	if obj == nil {
-		return nil, err
-	}
-
-	label, _, _ := testing.ExtractFromListOptions(opts)
-	if label == nil {
-		label = labels.Everything()
-	}
-	list := &v1.GCPSessionAffinityPolicyList{ListMeta: obj.(*v1.GCPSessionAffinityPolicyList).ListMeta}
-	for _, item := range obj.(*v1.GCPSessionAffinityPolicyList).Items {
-		if label.Matches(labels.Set(item.Labels)) {
-			list.Items = append(list.Items, item)
-		}
-	}
-	return list, err
-}
-
-// Watch returns a watch.Interface that watches the requested gCPSessionAffinityPolicies.
-func (c *FakeGCPSessionAffinityPolicies) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(gcpsessionaffinitypoliciesResource, c.ns, opts))
-
-}
-
-// Create takes the representation of a gCPSessionAffinityPolicy and creates it.  Returns the server's representation of the gCPSessionAffinityPolicy, and an error, if there is any.
-func (c *FakeGCPSessionAffinityPolicies) Create(ctx context.Context, gCPSessionAffinityPolicy *v1.GCPSessionAffinityPolicy, opts metav1.CreateOptions) (result *v1.GCPSessionAffinityPolicy, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(gcpsessionaffinitypoliciesResource, c.ns, gCPSessionAffinityPolicy), &v1.GCPSessionAffinityPolicy{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1.GCPSessionAffinityPolicy), err
-}
-
-// Update takes the representation of a gCPSessionAffinityPolicy and updates it. Returns the server's representation of the gCPSessionAffinityPolicy, and an error, if there is any.
-func (c *FakeGCPSessionAffinityPolicies) Update(ctx context.Context, gCPSessionAffinityPolicy *v1.GCPSessionAffinityPolicy, opts metav1.UpdateOptions) (result *v1.GCPSessionAffinityPolicy, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(gcpsessionaffinitypoliciesResource, c.ns, gCPSessionAffinityPolicy), &v1.GCPSessionAffinityPolicy{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1.GCPSessionAffinityPolicy), err
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeGCPSessionAffinityPolicies) UpdateStatus(ctx context.Context, gCPSessionAffinityPolicy *v1.GCPSessionAffinityPolicy, opts metav1.UpdateOptions) (*v1.GCPSessionAffinityPolicy, error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(gcpsessionaffinitypoliciesResource, "status", c.ns, gCPSessionAffinityPolicy), &v1.GCPSessionAffinityPolicy{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1.GCPSessionAffinityPolicy), err
-}
-
-// Delete takes name of the gCPSessionAffinityPolicy and deletes it. Returns an error if one occurs.
-func (c *FakeGCPSessionAffinityPolicies) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
-	_, err := c.Fake.
-		Invokes(testing.NewDeleteActionWithOptions(gcpsessionaffinitypoliciesResource, c.ns, name, opts), &v1.GCPSessionAffinityPolicy{})
-
-	return err
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *FakeGCPSessionAffinityPolicies) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(gcpsessionaffinitypoliciesResource, c.ns, listOpts)
-
-	_, err := c.Fake.Invokes(action, &v1.GCPSessionAffinityPolicyList{})
-	return err
-}
-
-// Patch applies the patch and returns the patched gCPSessionAffinityPolicy.
-func (c *FakeGCPSessionAffinityPolicies) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.GCPSessionAffinityPolicy, err error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(gcpsessionaffinitypoliciesResource, c.ns, name, pt, data, subresources...), &v1.GCPSessionAffinityPolicy{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1.GCPSessionAffinityPolicy), err
 }

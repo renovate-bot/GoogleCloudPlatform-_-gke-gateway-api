@@ -26,4 +26,6 @@ type GCPSessionAffinityFilterExpansion interface{}
 
 type GCPSessionAffinityPolicyExpansion interface{}
 
+type GCPTrafficDistributionPolicyExpansion interface{}
+
 type HealthCheckPolicyExpansion interface{}

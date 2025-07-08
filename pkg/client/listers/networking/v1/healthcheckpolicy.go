@@ -19,10 +19,10 @@
 package v1
 
 import (
-	v1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // HealthCheckPolicyLister helps list HealthCheckPolicies.
@@ -30,7 +30,7 @@ import (
 type HealthCheckPolicyLister interface {
 	// List lists all HealthCheckPolicies in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.HealthCheckPolicy, err error)
+	List(selector labels.Selector) (ret []*networkingv1.HealthCheckPolicy, err error)
 	// HealthCheckPolicies returns an object that can list and get HealthCheckPolicies.
 	HealthCheckPolicies(namespace string) HealthCheckPolicyNamespaceLister
 	HealthCheckPolicyListerExpansion
@@ -38,25 +38,17 @@ type HealthCheckPolicyLister interface {
 
 // healthCheckPolicyLister implements the HealthCheckPolicyLister interface.
 type healthCheckPolicyLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*networkingv1.HealthCheckPolicy]
 }
 
 // NewHealthCheckPolicyLister returns a new HealthCheckPolicyLister.
 func NewHealthCheckPolicyLister(indexer cache.Indexer) HealthCheckPolicyLister {
-	return &healthCheckPolicyLister{indexer: indexer}
-}
-
-// List lists all HealthCheckPolicies in the indexer.
-func (s *healthCheckPolicyLister) List(selector labels.Selector) (ret []*v1.HealthCheckPolicy, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.HealthCheckPolicy))
-	})
-	return ret, err
+	return &healthCheckPolicyLister{listers.New[*networkingv1.HealthCheckPolicy](indexer, networkingv1.Resource("healthcheckpolicy"))}
 }
 
 // HealthCheckPolicies returns an object that can list and get HealthCheckPolicies.
 func (s *healthCheckPolicyLister) HealthCheckPolicies(namespace string) HealthCheckPolicyNamespaceLister {
-	return healthCheckPolicyNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return healthCheckPolicyNamespaceLister{listers.NewNamespaced[*networkingv1.HealthCheckPolicy](s.ResourceIndexer, namespace)}
 }
 
 // HealthCheckPolicyNamespaceLister helps list and get HealthCheckPolicies.
@@ -64,36 +56,15 @@ func (s *healthCheckPolicyLister) HealthCheckPolicies(namespace string) HealthCh
 type HealthCheckPolicyNamespaceLister interface {
 	// List lists all HealthCheckPolicies in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.HealthCheckPolicy, err error)
+	List(selector labels.Selector) (ret []*networkingv1.HealthCheckPolicy, err error)
 	// Get retrieves the HealthCheckPolicy from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1.HealthCheckPolicy, error)
+	Get(name string) (*networkingv1.HealthCheckPolicy, error)
 	HealthCheckPolicyNamespaceListerExpansion
 }
 
 // healthCheckPolicyNamespaceLister implements the HealthCheckPolicyNamespaceLister
 // interface.
 type healthCheckPolicyNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all HealthCheckPolicies in the indexer for a given namespace.
-func (s healthCheckPolicyNamespaceLister) List(selector labels.Selector) (ret []*v1.HealthCheckPolicy, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.HealthCheckPolicy))
-	})
-	return ret, err
-}
-
-// Get retrieves the HealthCheckPolicy from the indexer for a given namespace and name.
-func (s healthCheckPolicyNamespaceLister) Get(name string) (*v1.HealthCheckPolicy, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1.Resource("healthcheckpolicy"), name)
-	}
-	return obj.(*v1.HealthCheckPolicy), nil
+	listers.ResourceIndexer[*networkingv1.HealthCheckPolicy]
 }

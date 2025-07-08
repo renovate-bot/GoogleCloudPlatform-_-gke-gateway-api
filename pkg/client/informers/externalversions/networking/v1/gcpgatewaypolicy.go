@@ -19,13 +19,13 @@
 package v1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
+	apisnetworkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
 	versioned "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/listers/networking/v1"
+	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/listers/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // GCPGatewayPolicies.
 type GCPGatewayPolicyInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1.GCPGatewayPolicyLister
+	Lister() networkingv1.GCPGatewayPolicyLister
 }
 
 type gCPGatewayPolicyInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredGCPGatewayPolicyInformer(client versioned.Interface, namespace s
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.NetworkingV1().GCPGatewayPolicies(namespace).List(context.TODO(), options)
+				return client.NetworkingV1().GCPGatewayPolicies(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.NetworkingV1().GCPGatewayPolicies(namespace).Watch(context.TODO(), options)
+				return client.NetworkingV1().GCPGatewayPolicies(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options metav1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.NetworkingV1().GCPGatewayPolicies(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options metav1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.NetworkingV1().GCPGatewayPolicies(namespace).Watch(ctx, options)
 			},
 		},
-		&networkingv1.GCPGatewayPolicy{},
+		&apisnetworkingv1.GCPGatewayPolicy{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *gCPGatewayPolicyInformer) defaultInformer(client versioned.Interface, r
 }
 
 func (f *gCPGatewayPolicyInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&networkingv1.GCPGatewayPolicy{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisnetworkingv1.GCPGatewayPolicy{}, f.defaultInformer)
 }
 
-func (f *gCPGatewayPolicyInformer) Lister() v1.GCPGatewayPolicyLister {
-	return v1.NewGCPGatewayPolicyLister(f.Informer().GetIndexer())
+func (f *gCPGatewayPolicyInformer) Lister() networkingv1.GCPGatewayPolicyLister {
+	return networkingv1.NewGCPGatewayPolicyLister(f.Informer().GetIndexer())
 }

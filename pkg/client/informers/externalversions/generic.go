@@ -19,7 +19,7 @@
 package externalversions
 
 import (
-	"fmt"
+	fmt "fmt"
 
 	v1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -61,6 +61,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Networking().V1().GCPSessionAffinityFilters().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("gcpsessionaffinitypolicies"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Networking().V1().GCPSessionAffinityPolicies().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("gcptrafficdistributionpolicies"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Networking().V1().GCPTrafficDistributionPolicies().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("healthcheckpolicies"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Networking().V1().HealthCheckPolicies().Informer()}, nil
 

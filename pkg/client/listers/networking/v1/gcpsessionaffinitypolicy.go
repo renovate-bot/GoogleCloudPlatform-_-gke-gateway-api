@@ -19,10 +19,10 @@
 package v1
 
 import (
-	v1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // GCPSessionAffinityPolicyLister helps list GCPSessionAffinityPolicies.
@@ -30,7 +30,7 @@ import (
 type GCPSessionAffinityPolicyLister interface {
 	// List lists all GCPSessionAffinityPolicies in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.GCPSessionAffinityPolicy, err error)
+	List(selector labels.Selector) (ret []*networkingv1.GCPSessionAffinityPolicy, err error)
 	// GCPSessionAffinityPolicies returns an object that can list and get GCPSessionAffinityPolicies.
 	GCPSessionAffinityPolicies(namespace string) GCPSessionAffinityPolicyNamespaceLister
 	GCPSessionAffinityPolicyListerExpansion
@@ -38,25 +38,17 @@ type GCPSessionAffinityPolicyLister interface {
 
 // gCPSessionAffinityPolicyLister implements the GCPSessionAffinityPolicyLister interface.
 type gCPSessionAffinityPolicyLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*networkingv1.GCPSessionAffinityPolicy]
 }
 
 // NewGCPSessionAffinityPolicyLister returns a new GCPSessionAffinityPolicyLister.
 func NewGCPSessionAffinityPolicyLister(indexer cache.Indexer) GCPSessionAffinityPolicyLister {
-	return &gCPSessionAffinityPolicyLister{indexer: indexer}
-}
-
-// List lists all GCPSessionAffinityPolicies in the indexer.
-func (s *gCPSessionAffinityPolicyLister) List(selector labels.Selector) (ret []*v1.GCPSessionAffinityPolicy, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.GCPSessionAffinityPolicy))
-	})
-	return ret, err
+	return &gCPSessionAffinityPolicyLister{listers.New[*networkingv1.GCPSessionAffinityPolicy](indexer, networkingv1.Resource("gcpsessionaffinitypolicy"))}
 }
 
 // GCPSessionAffinityPolicies returns an object that can list and get GCPSessionAffinityPolicies.
 func (s *gCPSessionAffinityPolicyLister) GCPSessionAffinityPolicies(namespace string) GCPSessionAffinityPolicyNamespaceLister {
-	return gCPSessionAffinityPolicyNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return gCPSessionAffinityPolicyNamespaceLister{listers.NewNamespaced[*networkingv1.GCPSessionAffinityPolicy](s.ResourceIndexer, namespace)}
 }
 
 // GCPSessionAffinityPolicyNamespaceLister helps list and get GCPSessionAffinityPolicies.
@@ -64,36 +56,15 @@ func (s *gCPSessionAffinityPolicyLister) GCPSessionAffinityPolicies(namespace st
 type GCPSessionAffinityPolicyNamespaceLister interface {
 	// List lists all GCPSessionAffinityPolicies in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.GCPSessionAffinityPolicy, err error)
+	List(selector labels.Selector) (ret []*networkingv1.GCPSessionAffinityPolicy, err error)
 	// Get retrieves the GCPSessionAffinityPolicy from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1.GCPSessionAffinityPolicy, error)
+	Get(name string) (*networkingv1.GCPSessionAffinityPolicy, error)
 	GCPSessionAffinityPolicyNamespaceListerExpansion
 }
 
 // gCPSessionAffinityPolicyNamespaceLister implements the GCPSessionAffinityPolicyNamespaceLister
 // interface.
 type gCPSessionAffinityPolicyNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all GCPSessionAffinityPolicies in the indexer for a given namespace.
-func (s gCPSessionAffinityPolicyNamespaceLister) List(selector labels.Selector) (ret []*v1.GCPSessionAffinityPolicy, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.GCPSessionAffinityPolicy))
-	})
-	return ret, err
-}
-
-// Get retrieves the GCPSessionAffinityPolicy from the indexer for a given namespace and name.
-func (s gCPSessionAffinityPolicyNamespaceLister) Get(name string) (*v1.GCPSessionAffinityPolicy, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1.Resource("gcpsessionaffinitypolicy"), name)
-	}
-	return obj.(*v1.GCPSessionAffinityPolicy), nil
+	listers.ResourceIndexer[*networkingv1.GCPSessionAffinityPolicy]
 }

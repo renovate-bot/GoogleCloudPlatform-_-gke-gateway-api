@@ -19,13 +19,13 @@
 package v1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
+	apisnetworkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
 	versioned "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/listers/networking/v1"
+	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/listers/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // GCPSessionAffinityFilters.
 type GCPSessionAffinityFilterInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1.GCPSessionAffinityFilterLister
+	Lister() networkingv1.GCPSessionAffinityFilterLister
 }
 
 type gCPSessionAffinityFilterInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredGCPSessionAffinityFilterInformer(client versioned.Interface, nam
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.NetworkingV1().GCPSessionAffinityFilters(namespace).List(context.TODO(), options)
+				return client.NetworkingV1().GCPSessionAffinityFilters(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.NetworkingV1().GCPSessionAffinityFilters(namespace).Watch(context.TODO(), options)
+				return client.NetworkingV1().GCPSessionAffinityFilters(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options metav1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.NetworkingV1().GCPSessionAffinityFilters(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options metav1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.NetworkingV1().GCPSessionAffinityFilters(namespace).Watch(ctx, options)
 			},
 		},
-		&networkingv1.GCPSessionAffinityFilter{},
+		&apisnetworkingv1.GCPSessionAffinityFilter{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *gCPSessionAffinityFilterInformer) defaultInformer(client versioned.Inte
 }
 
 func (f *gCPSessionAffinityFilterInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&networkingv1.GCPSessionAffinityFilter{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisnetworkingv1.GCPSessionAffinityFilter{}, f.defaultInformer)
 }
 
-func (f *gCPSessionAffinityFilterInformer) Lister() v1.GCPSessionAffinityFilterLister {
-	return v1.NewGCPSessionAffinityFilterLister(f.Informer().GetIndexer())
+func (f *gCPSessionAffinityFilterInformer) Lister() networkingv1.GCPSessionAffinityFilterLister {
+	return networkingv1.NewGCPSessionAffinityFilterLister(f.Informer().GetIndexer())
 }

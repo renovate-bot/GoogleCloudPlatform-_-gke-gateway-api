@@ -19,15 +19,14 @@
 package v1
 
 import (
-	"context"
-	"time"
+	context "context"
 
-	v1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
+	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
 	scheme "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
-	rest "k8s.io/client-go/rest"
+	gentype "k8s.io/client-go/gentype"
 )
 
 // GCPGatewayPoliciesGetter has a method to return a GCPGatewayPolicyInterface.
@@ -38,158 +37,34 @@ type GCPGatewayPoliciesGetter interface {
 
 // GCPGatewayPolicyInterface has methods to work with GCPGatewayPolicy resources.
 type GCPGatewayPolicyInterface interface {
-	Create(ctx context.Context, gCPGatewayPolicy *v1.GCPGatewayPolicy, opts metav1.CreateOptions) (*v1.GCPGatewayPolicy, error)
-	Update(ctx context.Context, gCPGatewayPolicy *v1.GCPGatewayPolicy, opts metav1.UpdateOptions) (*v1.GCPGatewayPolicy, error)
-	UpdateStatus(ctx context.Context, gCPGatewayPolicy *v1.GCPGatewayPolicy, opts metav1.UpdateOptions) (*v1.GCPGatewayPolicy, error)
+	Create(ctx context.Context, gCPGatewayPolicy *networkingv1.GCPGatewayPolicy, opts metav1.CreateOptions) (*networkingv1.GCPGatewayPolicy, error)
+	Update(ctx context.Context, gCPGatewayPolicy *networkingv1.GCPGatewayPolicy, opts metav1.UpdateOptions) (*networkingv1.GCPGatewayPolicy, error)
+	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+	UpdateStatus(ctx context.Context, gCPGatewayPolicy *networkingv1.GCPGatewayPolicy, opts metav1.UpdateOptions) (*networkingv1.GCPGatewayPolicy, error)
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
-	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.GCPGatewayPolicy, error)
-	List(ctx context.Context, opts metav1.ListOptions) (*v1.GCPGatewayPolicyList, error)
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*networkingv1.GCPGatewayPolicy, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*networkingv1.GCPGatewayPolicyList, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.GCPGatewayPolicy, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *networkingv1.GCPGatewayPolicy, err error)
 	GCPGatewayPolicyExpansion
 }
 
 // gCPGatewayPolicies implements GCPGatewayPolicyInterface
 type gCPGatewayPolicies struct {
-	client rest.Interface
-	ns     string
+	*gentype.ClientWithList[*networkingv1.GCPGatewayPolicy, *networkingv1.GCPGatewayPolicyList]
 }
 
 // newGCPGatewayPolicies returns a GCPGatewayPolicies
 func newGCPGatewayPolicies(c *NetworkingV1Client, namespace string) *gCPGatewayPolicies {
 	return &gCPGatewayPolicies{
-		client: c.RESTClient(),
-		ns:     namespace,
+		gentype.NewClientWithList[*networkingv1.GCPGatewayPolicy, *networkingv1.GCPGatewayPolicyList](
+			"gcpgatewaypolicies",
+			c.RESTClient(),
+			scheme.ParameterCodec,
+			namespace,
+			func() *networkingv1.GCPGatewayPolicy { return &networkingv1.GCPGatewayPolicy{} },
+			func() *networkingv1.GCPGatewayPolicyList { return &networkingv1.GCPGatewayPolicyList{} },
+		),
 	}
-}
-
-// Get takes name of the gCPGatewayPolicy, and returns the corresponding gCPGatewayPolicy object, and an error if there is any.
-func (c *gCPGatewayPolicies) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.GCPGatewayPolicy, err error) {
-	result = &v1.GCPGatewayPolicy{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("gcpgatewaypolicies").
-		Name(name).
-		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of GCPGatewayPolicies that match those selectors.
-func (c *gCPGatewayPolicies) List(ctx context.Context, opts metav1.ListOptions) (result *v1.GCPGatewayPolicyList, err error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result = &v1.GCPGatewayPolicyList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("gcpgatewaypolicies").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested gCPGatewayPolicies.
-func (c *gCPGatewayPolicies) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(c.ns).
-		Resource("gcpgatewaypolicies").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-// Create takes the representation of a gCPGatewayPolicy and creates it.  Returns the server's representation of the gCPGatewayPolicy, and an error, if there is any.
-func (c *gCPGatewayPolicies) Create(ctx context.Context, gCPGatewayPolicy *v1.GCPGatewayPolicy, opts metav1.CreateOptions) (result *v1.GCPGatewayPolicy, err error) {
-	result = &v1.GCPGatewayPolicy{}
-	err = c.client.Post().
-		Namespace(c.ns).
-		Resource("gcpgatewaypolicies").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(gCPGatewayPolicy).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Update takes the representation of a gCPGatewayPolicy and updates it. Returns the server's representation of the gCPGatewayPolicy, and an error, if there is any.
-func (c *gCPGatewayPolicies) Update(ctx context.Context, gCPGatewayPolicy *v1.GCPGatewayPolicy, opts metav1.UpdateOptions) (result *v1.GCPGatewayPolicy, err error) {
-	result = &v1.GCPGatewayPolicy{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("gcpgatewaypolicies").
-		Name(gCPGatewayPolicy.Name).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(gCPGatewayPolicy).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *gCPGatewayPolicies) UpdateStatus(ctx context.Context, gCPGatewayPolicy *v1.GCPGatewayPolicy, opts metav1.UpdateOptions) (result *v1.GCPGatewayPolicy, err error) {
-	result = &v1.GCPGatewayPolicy{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("gcpgatewaypolicies").
-		Name(gCPGatewayPolicy.Name).
-		SubResource("status").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(gCPGatewayPolicy).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Delete takes name of the gCPGatewayPolicy and deletes it. Returns an error if one occurs.
-func (c *gCPGatewayPolicies) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("gcpgatewaypolicies").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *gCPGatewayPolicies) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	var timeout time.Duration
-	if listOpts.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
-	}
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("gcpgatewaypolicies").
-		VersionedParams(&listOpts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// Patch applies the patch and returns the patched gCPGatewayPolicy.
-func (c *gCPGatewayPolicies) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.GCPGatewayPolicy, err error) {
-	result = &v1.GCPGatewayPolicy{}
-	err = c.client.Patch(pt).
-		Namespace(c.ns).
-		Resource("gcpgatewaypolicies").
-		Name(name).
-		SubResource(subresources...).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(data).
-		Do(ctx).
-		Into(result)
-	return
 }

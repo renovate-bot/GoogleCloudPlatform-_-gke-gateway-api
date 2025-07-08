@@ -19,10 +19,10 @@
 package v1
 
 import (
-	v1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // GCPGatewayPolicyLister helps list GCPGatewayPolicies.
@@ -30,7 +30,7 @@ import (
 type GCPGatewayPolicyLister interface {
 	// List lists all GCPGatewayPolicies in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.GCPGatewayPolicy, err error)
+	List(selector labels.Selector) (ret []*networkingv1.GCPGatewayPolicy, err error)
 	// GCPGatewayPolicies returns an object that can list and get GCPGatewayPolicies.
 	GCPGatewayPolicies(namespace string) GCPGatewayPolicyNamespaceLister
 	GCPGatewayPolicyListerExpansion
@@ -38,25 +38,17 @@ type GCPGatewayPolicyLister interface {
 
 // gCPGatewayPolicyLister implements the GCPGatewayPolicyLister interface.
 type gCPGatewayPolicyLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*networkingv1.GCPGatewayPolicy]
 }
 
 // NewGCPGatewayPolicyLister returns a new GCPGatewayPolicyLister.
 func NewGCPGatewayPolicyLister(indexer cache.Indexer) GCPGatewayPolicyLister {
-	return &gCPGatewayPolicyLister{indexer: indexer}
-}
-
-// List lists all GCPGatewayPolicies in the indexer.
-func (s *gCPGatewayPolicyLister) List(selector labels.Selector) (ret []*v1.GCPGatewayPolicy, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.GCPGatewayPolicy))
-	})
-	return ret, err
+	return &gCPGatewayPolicyLister{listers.New[*networkingv1.GCPGatewayPolicy](indexer, networkingv1.Resource("gcpgatewaypolicy"))}
 }
 
 // GCPGatewayPolicies returns an object that can list and get GCPGatewayPolicies.
 func (s *gCPGatewayPolicyLister) GCPGatewayPolicies(namespace string) GCPGatewayPolicyNamespaceLister {
-	return gCPGatewayPolicyNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return gCPGatewayPolicyNamespaceLister{listers.NewNamespaced[*networkingv1.GCPGatewayPolicy](s.ResourceIndexer, namespace)}
 }
 
 // GCPGatewayPolicyNamespaceLister helps list and get GCPGatewayPolicies.
@@ -64,36 +56,15 @@ func (s *gCPGatewayPolicyLister) GCPGatewayPolicies(namespace string) GCPGateway
 type GCPGatewayPolicyNamespaceLister interface {
 	// List lists all GCPGatewayPolicies in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.GCPGatewayPolicy, err error)
+	List(selector labels.Selector) (ret []*networkingv1.GCPGatewayPolicy, err error)
 	// Get retrieves the GCPGatewayPolicy from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1.GCPGatewayPolicy, error)
+	Get(name string) (*networkingv1.GCPGatewayPolicy, error)
 	GCPGatewayPolicyNamespaceListerExpansion
 }
 
 // gCPGatewayPolicyNamespaceLister implements the GCPGatewayPolicyNamespaceLister
 // interface.
 type gCPGatewayPolicyNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all GCPGatewayPolicies in the indexer for a given namespace.
-func (s gCPGatewayPolicyNamespaceLister) List(selector labels.Selector) (ret []*v1.GCPGatewayPolicy, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.GCPGatewayPolicy))
-	})
-	return ret, err
-}
-
-// Get retrieves the GCPGatewayPolicy from the indexer for a given namespace and name.
-func (s gCPGatewayPolicyNamespaceLister) Get(name string) (*v1.GCPGatewayPolicy, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1.Resource("gcpgatewaypolicy"), name)
-	}
-	return obj.(*v1.GCPGatewayPolicy), nil
+	listers.ResourceIndexer[*networkingv1.GCPGatewayPolicy]
 }

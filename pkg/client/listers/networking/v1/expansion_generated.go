@@ -50,6 +50,14 @@ type GCPSessionAffinityPolicyListerExpansion interface{}
 // GCPSessionAffinityPolicyNamespaceLister.
 type GCPSessionAffinityPolicyNamespaceListerExpansion interface{}
 
+// GCPTrafficDistributionPolicyListerExpansion allows custom methods to be added to
+// GCPTrafficDistributionPolicyLister.
+type GCPTrafficDistributionPolicyListerExpansion interface{}
+
+// GCPTrafficDistributionPolicyNamespaceListerExpansion allows custom methods to be added to
+// GCPTrafficDistributionPolicyNamespaceLister.
+type GCPTrafficDistributionPolicyNamespaceListerExpansion interface{}
+
 // HealthCheckPolicyListerExpansion allows custom methods to be added to
 // HealthCheckPolicyLister.
 type HealthCheckPolicyListerExpansion interface{}

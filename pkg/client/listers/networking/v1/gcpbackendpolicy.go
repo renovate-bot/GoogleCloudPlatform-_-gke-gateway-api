@@ -19,10 +19,10 @@
 package v1
 
 import (
-	v1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // GCPBackendPolicyLister helps list GCPBackendPolicies.
@@ -30,7 +30,7 @@ import (
 type GCPBackendPolicyLister interface {
 	// List lists all GCPBackendPolicies in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.GCPBackendPolicy, err error)
+	List(selector labels.Selector) (ret []*networkingv1.GCPBackendPolicy, err error)
 	// GCPBackendPolicies returns an object that can list and get GCPBackendPolicies.
 	GCPBackendPolicies(namespace string) GCPBackendPolicyNamespaceLister
 	GCPBackendPolicyListerExpansion
@@ -38,25 +38,17 @@ type GCPBackendPolicyLister interface {
 
 // gCPBackendPolicyLister implements the GCPBackendPolicyLister interface.
 type gCPBackendPolicyLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*networkingv1.GCPBackendPolicy]
 }
 
 // NewGCPBackendPolicyLister returns a new GCPBackendPolicyLister.
 func NewGCPBackendPolicyLister(indexer cache.Indexer) GCPBackendPolicyLister {
-	return &gCPBackendPolicyLister{indexer: indexer}
-}
-
-// List lists all GCPBackendPolicies in the indexer.
-func (s *gCPBackendPolicyLister) List(selector labels.Selector) (ret []*v1.GCPBackendPolicy, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.GCPBackendPolicy))
-	})
-	return ret, err
+	return &gCPBackendPolicyLister{listers.New[*networkingv1.GCPBackendPolicy](indexer, networkingv1.Resource("gcpbackendpolicy"))}
 }
 
 // GCPBackendPolicies returns an object that can list and get GCPBackendPolicies.
 func (s *gCPBackendPolicyLister) GCPBackendPolicies(namespace string) GCPBackendPolicyNamespaceLister {
-	return gCPBackendPolicyNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return gCPBackendPolicyNamespaceLister{listers.NewNamespaced[*networkingv1.GCPBackendPolicy](s.ResourceIndexer, namespace)}
 }
 
 // GCPBackendPolicyNamespaceLister helps list and get GCPBackendPolicies.
@@ -64,36 +56,15 @@ func (s *gCPBackendPolicyLister) GCPBackendPolicies(namespace string) GCPBackend
 type GCPBackendPolicyNamespaceLister interface {
 	// List lists all GCPBackendPolicies in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.GCPBackendPolicy, err error)
+	List(selector labels.Selector) (ret []*networkingv1.GCPBackendPolicy, err error)
 	// Get retrieves the GCPBackendPolicy from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1.GCPBackendPolicy, error)
+	Get(name string) (*networkingv1.GCPBackendPolicy, error)
 	GCPBackendPolicyNamespaceListerExpansion
 }
 
 // gCPBackendPolicyNamespaceLister implements the GCPBackendPolicyNamespaceLister
 // interface.
 type gCPBackendPolicyNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all GCPBackendPolicies in the indexer for a given namespace.
-func (s gCPBackendPolicyNamespaceLister) List(selector labels.Selector) (ret []*v1.GCPBackendPolicy, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.GCPBackendPolicy))
-	})
-	return ret, err
-}
-
-// Get retrieves the GCPBackendPolicy from the indexer for a given namespace and name.
-func (s gCPBackendPolicyNamespaceLister) Get(name string) (*v1.GCPBackendPolicy, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1.Resource("gcpbackendpolicy"), name)
-	}
-	return obj.(*v1.GCPBackendPolicy), nil
+	listers.ResourceIndexer[*networkingv1.GCPBackendPolicy]
 }

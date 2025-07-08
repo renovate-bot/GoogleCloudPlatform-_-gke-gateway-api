@@ -29,23 +29,27 @@ type FakeNetworkingV1 struct {
 }
 
 func (c *FakeNetworkingV1) GCPBackendPolicies(namespace string) v1.GCPBackendPolicyInterface {
-	return &FakeGCPBackendPolicies{c, namespace}
+	return newFakeGCPBackendPolicies(c, namespace)
 }
 
 func (c *FakeNetworkingV1) GCPGatewayPolicies(namespace string) v1.GCPGatewayPolicyInterface {
-	return &FakeGCPGatewayPolicies{c, namespace}
+	return newFakeGCPGatewayPolicies(c, namespace)
 }
 
 func (c *FakeNetworkingV1) GCPSessionAffinityFilters(namespace string) v1.GCPSessionAffinityFilterInterface {
-	return &FakeGCPSessionAffinityFilters{c, namespace}
+	return newFakeGCPSessionAffinityFilters(c, namespace)
 }
 
 func (c *FakeNetworkingV1) GCPSessionAffinityPolicies(namespace string) v1.GCPSessionAffinityPolicyInterface {
-	return &FakeGCPSessionAffinityPolicies{c, namespace}
+	return newFakeGCPSessionAffinityPolicies(c, namespace)
+}
+
+func (c *FakeNetworkingV1) GCPTrafficDistributionPolicies(namespace string) v1.GCPTrafficDistributionPolicyInterface {
+	return newFakeGCPTrafficDistributionPolicies(c, namespace)
 }
 
 func (c *FakeNetworkingV1) HealthCheckPolicies(namespace string) v1.HealthCheckPolicyInterface {
-	return &FakeHealthCheckPolicies{c, namespace}
+	return newFakeHealthCheckPolicies(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

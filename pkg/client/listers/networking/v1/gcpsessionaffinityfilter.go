@@ -19,10 +19,10 @@
 package v1
 
 import (
-	v1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // GCPSessionAffinityFilterLister helps list GCPSessionAffinityFilters.
@@ -30,7 +30,7 @@ import (
 type GCPSessionAffinityFilterLister interface {
 	// List lists all GCPSessionAffinityFilters in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.GCPSessionAffinityFilter, err error)
+	List(selector labels.Selector) (ret []*networkingv1.GCPSessionAffinityFilter, err error)
 	// GCPSessionAffinityFilters returns an object that can list and get GCPSessionAffinityFilters.
 	GCPSessionAffinityFilters(namespace string) GCPSessionAffinityFilterNamespaceLister
 	GCPSessionAffinityFilterListerExpansion
@@ -38,25 +38,17 @@ type GCPSessionAffinityFilterLister interface {
 
 // gCPSessionAffinityFilterLister implements the GCPSessionAffinityFilterLister interface.
 type gCPSessionAffinityFilterLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*networkingv1.GCPSessionAffinityFilter]
 }
 
 // NewGCPSessionAffinityFilterLister returns a new GCPSessionAffinityFilterLister.
 func NewGCPSessionAffinityFilterLister(indexer cache.Indexer) GCPSessionAffinityFilterLister {
-	return &gCPSessionAffinityFilterLister{indexer: indexer}
-}
-
-// List lists all GCPSessionAffinityFilters in the indexer.
-func (s *gCPSessionAffinityFilterLister) List(selector labels.Selector) (ret []*v1.GCPSessionAffinityFilter, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.GCPSessionAffinityFilter))
-	})
-	return ret, err
+	return &gCPSessionAffinityFilterLister{listers.New[*networkingv1.GCPSessionAffinityFilter](indexer, networkingv1.Resource("gcpsessionaffinityfilter"))}
 }
 
 // GCPSessionAffinityFilters returns an object that can list and get GCPSessionAffinityFilters.
 func (s *gCPSessionAffinityFilterLister) GCPSessionAffinityFilters(namespace string) GCPSessionAffinityFilterNamespaceLister {
-	return gCPSessionAffinityFilterNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return gCPSessionAffinityFilterNamespaceLister{listers.NewNamespaced[*networkingv1.GCPSessionAffinityFilter](s.ResourceIndexer, namespace)}
 }
 
 // GCPSessionAffinityFilterNamespaceLister helps list and get GCPSessionAffinityFilters.
@@ -64,36 +56,15 @@ func (s *gCPSessionAffinityFilterLister) GCPSessionAffinityFilters(namespace str
 type GCPSessionAffinityFilterNamespaceLister interface {
 	// List lists all GCPSessionAffinityFilters in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1.GCPSessionAffinityFilter, err error)
+	List(selector labels.Selector) (ret []*networkingv1.GCPSessionAffinityFilter, err error)
 	// Get retrieves the GCPSessionAffinityFilter from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1.GCPSessionAffinityFilter, error)
+	Get(name string) (*networkingv1.GCPSessionAffinityFilter, error)
 	GCPSessionAffinityFilterNamespaceListerExpansion
 }
 
 // gCPSessionAffinityFilterNamespaceLister implements the GCPSessionAffinityFilterNamespaceLister
 // interface.
 type gCPSessionAffinityFilterNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all GCPSessionAffinityFilters in the indexer for a given namespace.
-func (s gCPSessionAffinityFilterNamespaceLister) List(selector labels.Selector) (ret []*v1.GCPSessionAffinityFilter, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.GCPSessionAffinityFilter))
-	})
-	return ret, err
-}
-
-// Get retrieves the GCPSessionAffinityFilter from the indexer for a given namespace and name.
-func (s gCPSessionAffinityFilterNamespaceLister) Get(name string) (*v1.GCPSessionAffinityFilter, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1.Resource("gcpsessionaffinityfilter"), name)
-	}
-	return obj.(*v1.GCPSessionAffinityFilter), nil
+	listers.ResourceIndexer[*networkingv1.GCPSessionAffinityFilter]
 }

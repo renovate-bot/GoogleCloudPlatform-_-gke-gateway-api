@@ -19,15 +19,14 @@
 package v1
 
 import (
-	"context"
-	"time"
+	context "context"
 
-	v1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
+	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
 	scheme "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
-	rest "k8s.io/client-go/rest"
+	gentype "k8s.io/client-go/gentype"
 )
 
 // GCPBackendPoliciesGetter has a method to return a GCPBackendPolicyInterface.
@@ -38,158 +37,34 @@ type GCPBackendPoliciesGetter interface {
 
 // GCPBackendPolicyInterface has methods to work with GCPBackendPolicy resources.
 type GCPBackendPolicyInterface interface {
-	Create(ctx context.Context, gCPBackendPolicy *v1.GCPBackendPolicy, opts metav1.CreateOptions) (*v1.GCPBackendPolicy, error)
-	Update(ctx context.Context, gCPBackendPolicy *v1.GCPBackendPolicy, opts metav1.UpdateOptions) (*v1.GCPBackendPolicy, error)
-	UpdateStatus(ctx context.Context, gCPBackendPolicy *v1.GCPBackendPolicy, opts metav1.UpdateOptions) (*v1.GCPBackendPolicy, error)
+	Create(ctx context.Context, gCPBackendPolicy *networkingv1.GCPBackendPolicy, opts metav1.CreateOptions) (*networkingv1.GCPBackendPolicy, error)
+	Update(ctx context.Context, gCPBackendPolicy *networkingv1.GCPBackendPolicy, opts metav1.UpdateOptions) (*networkingv1.GCPBackendPolicy, error)
+	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+	UpdateStatus(ctx context.Context, gCPBackendPolicy *networkingv1.GCPBackendPolicy, opts metav1.UpdateOptions) (*networkingv1.GCPBackendPolicy, error)
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
-	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.GCPBackendPolicy, error)
-	List(ctx context.Context, opts metav1.ListOptions) (*v1.GCPBackendPolicyList, error)
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*networkingv1.GCPBackendPolicy, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*networkingv1.GCPBackendPolicyList, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.GCPBackendPolicy, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *networkingv1.GCPBackendPolicy, err error)
 	GCPBackendPolicyExpansion
 }
 
 // gCPBackendPolicies implements GCPBackendPolicyInterface
 type gCPBackendPolicies struct {
-	client rest.Interface
-	ns     string
+	*gentype.ClientWithList[*networkingv1.GCPBackendPolicy, *networkingv1.GCPBackendPolicyList]
 }
 
 // newGCPBackendPolicies returns a GCPBackendPolicies
 func newGCPBackendPolicies(c *NetworkingV1Client, namespace string) *gCPBackendPolicies {
 	return &gCPBackendPolicies{
-		client: c.RESTClient(),
-		ns:     namespace,
+		gentype.NewClientWithList[*networkingv1.GCPBackendPolicy, *networkingv1.GCPBackendPolicyList](
+			"gcpbackendpolicies",
+			c.RESTClient(),
+			scheme.ParameterCodec,
+			namespace,
+			func() *networkingv1.GCPBackendPolicy { return &networkingv1.GCPBackendPolicy{} },
+			func() *networkingv1.GCPBackendPolicyList { return &networkingv1.GCPBackendPolicyList{} },
+		),
 	}
-}
-
-// Get takes name of the gCPBackendPolicy, and returns the corresponding gCPBackendPolicy object, and an error if there is any.
-func (c *gCPBackendPolicies) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.GCPBackendPolicy, err error) {
-	result = &v1.GCPBackendPolicy{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("gcpbackendpolicies").
-		Name(name).
-		VersionedParams(&options, scheme.ParameterCodec).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// List takes label and field selectors, and returns the list of GCPBackendPolicies that match those selectors.
-func (c *gCPBackendPolicies) List(ctx context.Context, opts metav1.ListOptions) (result *v1.GCPBackendPolicyList, err error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result = &v1.GCPBackendPolicyList{}
-	err = c.client.Get().
-		Namespace(c.ns).
-		Resource("gcpbackendpolicies").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Watch returns a watch.Interface that watches the requested gCPBackendPolicies.
-func (c *gCPBackendPolicies) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(c.ns).
-		Resource("gcpbackendpolicies").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-// Create takes the representation of a gCPBackendPolicy and creates it.  Returns the server's representation of the gCPBackendPolicy, and an error, if there is any.
-func (c *gCPBackendPolicies) Create(ctx context.Context, gCPBackendPolicy *v1.GCPBackendPolicy, opts metav1.CreateOptions) (result *v1.GCPBackendPolicy, err error) {
-	result = &v1.GCPBackendPolicy{}
-	err = c.client.Post().
-		Namespace(c.ns).
-		Resource("gcpbackendpolicies").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(gCPBackendPolicy).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Update takes the representation of a gCPBackendPolicy and updates it. Returns the server's representation of the gCPBackendPolicy, and an error, if there is any.
-func (c *gCPBackendPolicies) Update(ctx context.Context, gCPBackendPolicy *v1.GCPBackendPolicy, opts metav1.UpdateOptions) (result *v1.GCPBackendPolicy, err error) {
-	result = &v1.GCPBackendPolicy{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("gcpbackendpolicies").
-		Name(gCPBackendPolicy.Name).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(gCPBackendPolicy).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *gCPBackendPolicies) UpdateStatus(ctx context.Context, gCPBackendPolicy *v1.GCPBackendPolicy, opts metav1.UpdateOptions) (result *v1.GCPBackendPolicy, err error) {
-	result = &v1.GCPBackendPolicy{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("gcpbackendpolicies").
-		Name(gCPBackendPolicy.Name).
-		SubResource("status").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(gCPBackendPolicy).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Delete takes name of the gCPBackendPolicy and deletes it. Returns an error if one occurs.
-func (c *gCPBackendPolicies) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("gcpbackendpolicies").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// DeleteCollection deletes a collection of objects.
-func (c *gCPBackendPolicies) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	var timeout time.Duration
-	if listOpts.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
-	}
-	return c.client.Delete().
-		Namespace(c.ns).
-		Resource("gcpbackendpolicies").
-		VersionedParams(&listOpts, scheme.ParameterCodec).
-		Timeout(timeout).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-// Patch applies the patch and returns the patched gCPBackendPolicy.
-func (c *gCPBackendPolicies) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.GCPBackendPolicy, err error) {
-	result = &v1.GCPBackendPolicy{}
-	err = c.client.Patch(pt).
-		Namespace(c.ns).
-		Resource("gcpbackendpolicies").
-		Name(name).
-		SubResource(subresources...).
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(data).
-		Do(ctx).
-		Into(result)
-	return
 }

@@ -19,8 +19,8 @@
 package versioned
 
 import (
-	"fmt"
-	"net/http"
+	fmt "fmt"
+	http "net/http"
 
 	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/clientset/versioned/typed/networking/v1"
 	discovery "k8s.io/client-go/discovery"

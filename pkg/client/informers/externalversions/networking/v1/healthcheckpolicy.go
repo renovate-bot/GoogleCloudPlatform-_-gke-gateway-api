@@ -19,13 +19,13 @@
 package v1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
-	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
+	apisnetworkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/apis/networking/v1"
 	versioned "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/informers/externalversions/internalinterfaces"
-	v1 "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/listers/networking/v1"
+	networkingv1 "github.com/GoogleCloudPlatform/gke-gateway-api/pkg/client/listers/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -36,7 +36,7 @@ import (
 // HealthCheckPolicies.
 type HealthCheckPolicyInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1.HealthCheckPolicyLister
+	Lister() networkingv1.HealthCheckPolicyLister
 }
 
 type healthCheckPolicyInformer struct {
@@ -62,16 +62,28 @@ func NewFilteredHealthCheckPolicyInformer(client versioned.Interface, namespace 
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.NetworkingV1().HealthCheckPolicies(namespace).List(context.TODO(), options)
+				return client.NetworkingV1().HealthCheckPolicies(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.NetworkingV1().HealthCheckPolicies(namespace).Watch(context.TODO(), options)
+				return client.NetworkingV1().HealthCheckPolicies(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options metav1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.NetworkingV1().HealthCheckPolicies(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options metav1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.NetworkingV1().HealthCheckPolicies(namespace).Watch(ctx, options)
 			},
 		},
-		&networkingv1.HealthCheckPolicy{},
+		&apisnetworkingv1.HealthCheckPolicy{},
 		resyncPeriod,
 		indexers,
 	)
@@ -82,9 +94,9 @@ func (f *healthCheckPolicyInformer) defaultInformer(client versioned.Interface, 
 }
 
 func (f *healthCheckPolicyInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&networkingv1.HealthCheckPolicy{}, f.defaultInformer)
+	return f.factory.InformerFor(&apisnetworkingv1.HealthCheckPolicy{}, f.defaultInformer)
 }
 
-func (f *healthCheckPolicyInformer) Lister() v1.HealthCheckPolicyLister {
-	return v1.NewHealthCheckPolicyLister(f.Informer().GetIndexer())
+func (f *healthCheckPolicyInformer) Lister() networkingv1.HealthCheckPolicyLister {
+	return networkingv1.NewHealthCheckPolicyLister(f.Informer().GetIndexer())
 }
